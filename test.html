@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body>
+        <div class="calendar">
+            <input type="month" id="monthInput">
+            <div class="day-of-week">
+                <div class="day">Sun</div>
+                <div class="day">Mon</div>
+                <div class="day">Tues</div>
+                <div class="day">Wed</div>
+                <div class="day">Thurs</div>
+                <div class="day">Fri</div>
+                <div class="day">Sat</div>
+            </div>
+            <div class="date-grid"></div>
+            <div><button id="backButton"><<</button><button id="todayButton">&#x29C6;</button><button id="nextButton">>></button></div>
+        </div>
+
+        <script>
+
+
+            /*
+            function updateMonth(value) {
+                month = document.getElementById('monthInput').value;
+                let [year, month] = month.split('-');
+                let newDate = new Date(year, month + value, 0);
+                document.getElementById('monthInput').value = newDate.toISOString().slice(0, 7);
+            }
+
+            let backButton = document.getElementById('backButton');
+            let todayButton = document.getElementById('todayButton');
+            let nextButton = document.getElementById('nextButton');
+
+            backButton.addEventListener('click', function() {
+                calendarDate.setMonth(calendarDate.getMonth() - 1);
+                updateCalendar(calendarDate);
+            });
+            todayButton.addEventListener('click', function() {
+                calendarDate=new Date();
+                updateCalendar(calendarDate);
+            });
+            nextButton.addEventListener('click', function() {
+                calendarDate.setMonth(calendarDate.getMonth() + 1);
+                updateCalendar(calendarDate);
+            });
+            */
+        </script>
+    </body>
+</html>

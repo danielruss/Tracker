@@ -1,0 +1,342 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="cal.js" type="module"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="./index.css">
+</head>
+
+<body class="d-flex flex-column h-100">
+    <nav class="navbar navbar-expand-sm bg-dark" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Tracker</a>
+            <div>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span id="nameIcon" class="text-white"><span class="fst-italic"> Not Logged In</span></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-sm">
+        <div id="searchInputGroup" class="d-flex flex-row justify-content-end">
+            <div class="input-group input-group-sm">
+                <input id="searchInput" type="text" class="form-control" list="previousSymptoms" placeholder="Search Sypmtoms">
+                <button id="searchBTN" class="input-group-text"><i class="bi bi-search"></i></button>
+            </div>
+        </div>
+        <div class="calendar">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+                <input type="month" id="monthInput">
+
+            </div> 
+            <div class="day-of-week">
+                <div class="day">Sun</div>
+                <div class="day">Mon</div>
+                <div class="day">Tues</div>
+                <div class="day">Wed</div>
+                <div class="day">Thurs</div>
+                <div class="day">Fri</div>
+                <div class="day">Sat</div>
+            </div>
+            <div class="date-grid"></div>
+        </div>
+        <table id="symptomTable" class="table table-hover">
+            <thead>
+                <tr id="headerRow">
+                    <th>Symptoms for <span id="dthead"></th>
+                </tr>
+            </thead>
+            <tbody id="symptomList"></tbody>
+            <tr id="noSymptoms">
+                <td colspan="3" class="text-center fst-italic">No symptoms added yet</td>
+            </tr>
+        </table>
+        <form>
+            <label for="symptom">Add Symptom </label>
+            <fieldset class="input-group">
+                <input type="text" id="symptom" name="symptom" list="previousSymptoms" class="form-control">
+                <datalist id="previousSymptoms" type="text">
+                </datalist>
+                <input type="button" value="+" class="btn btn-primary" id="addSymptom">
+
+            </fieldset>
+        </form>
+        <button onclick="trySampleRequest();">Login</button>
+
+    </main>
+    <footer class="mt-auto bg-light py-3 d-flex justify-content-between">
+        <div class="text-muted ps-3"> this is a footer</div>
+        <span class="d-sm-none">xs</span>
+        <span class="d-none d-sm-inline d-md-none">SM </span>
+        <span class="d-none d-md-inline d-lg-none">med</span>
+        <div class="text-muted pe-3"><a id="share" class="bi bi-share-fill"></a></div>
+    </footer>
+
+
+    <script>
+        
+
+
+        document.getElementById("share").addEventListener("click", async function () {
+            let table = document.querySelector("table");
+            let symptoms = [];
+            for (let i = 0; i < table.tBodies[0].rows.length; i++) {
+                let row = table.tBodies[0].rows[i];
+                let date = row.cells[0].innerHTML;
+                let symptom = row.cells[1].innerHTML;
+                let ok = row.cells[2].querySelector("input[type='checkbox']").checked;
+                symptoms.push({ date, symptom, ok });
+            }
+            console.log(symptoms);
+            await navigator.share({
+                title:"Symptom Data",
+                text:JSON.stringify(symptoms)
+            });
+        });
+
+
+
+
+
+
+        var YOUR_CLIENT_ID = '886688049132-ds240jmcli6rfut2ich7qeu27rq1u82p.apps.googleusercontent.com';
+        var YOUR_REDIRECT_URI = "http://localhost:5001/";
+
+        // Parse query string to see if page request is coming from OAuth 2.0 server.
+        var fragmentString = location.hash.substring(1);
+        var params = {};
+        var regex = /([^&=]+)=([^&]*)/g, m;
+        while (m = regex.exec(fragmentString)) {
+            params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+        }
+        if (Object.keys(params).length > 0 && params['state']) {
+            if (params['state'] == localStorage.getItem('state')) {
+                localStorage.setItem('oauth2-test-params', JSON.stringify(params));
+
+                trySampleRequest();
+            } else {
+                console.log('State mismatch. Possible CSRF attack');
+            }
+        }
+
+        // Function to generate a random state value
+        function generateCryptoRandomState() {
+            const randomValues = new Uint32Array(2);
+            window.crypto.getRandomValues(randomValues);
+
+            // Encode as UTF-8
+            const utf8Encoder = new TextEncoder();
+            const utf8Array = utf8Encoder.encode(
+                String.fromCharCode.apply(null, randomValues)
+            );
+
+            // Base64 encode the UTF-8 data
+            return btoa(String.fromCharCode.apply(null, utf8Array))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        // If there's an access token, try an API request.
+        // Otherwise, start OAuth 2.0 flow.
+        async function trySampleRequest() {
+            var params = JSON.parse(localStorage.getItem('oauth2-test-params'));
+            if (params && params['access_token']) {
+                // User authorized the request. Now, check which scopes were granted.
+                if (params['scope'].includes('https://www.googleapis.com/auth/drive.file')) {
+                    // User authorized read-only Drive activity permission.
+                    // Calling the APIs, etc.
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET',
+                        'https://www.googleapis.com/drive/v3/about?fields=user&' +
+                        'access_token=' + params['access_token']);
+                    xhr.onreadystatechange = function (e) {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            console.log(xhr.response);
+                            let resp = JSON.parse(xhr.response);
+                            let nameIconElement = document.getElementById('nameIcon');
+                            nameIconElement.innerHTML = '';
+                            if (resp.user.displayName) {
+                                let nameElement = document.createElement('span');
+                                nameElement.innerText = resp.user.displayName;
+                                nameIconElement.insertAdjacentElement('beforeend', nameElement);
+                            }
+                            if (resp.user.photoLink) {
+                                let iconElement = document.createElement('img');
+                                iconElement.src = resp.user.photoLink;
+                                iconElement.style.maxHeight="40px";
+                                iconElement.style.paddingLeft="10px";
+                                nameIconElement.insertAdjacentElement('beforeend', iconElement);
+                            }
+                        } else if (xhr.readyState === 4 && xhr.status === 401) {
+                            // Token invalid, so prompt for user permission.
+                            oauth2SignIn();
+                        }
+                    };
+                    xhr.send(null);
+                    location.hash = '';
+                }
+                else {
+                    // User didn't authorize read-only Drive activity permission.
+                    // Update UX and application accordingly
+                    console.log('User did not authorize read-only Drive activity permission.');
+                }
+
+                // Check if user authorized spreadsheets read/write permission.
+                if (params['scope'].includes('https://www.googleapis.com/auth/spreadsheets')) {
+                    // User authorized Calendar read permission.
+                    // Calling the APIs, etc.
+                    console.log('User authorized spreadsheets read/write permission.');
+
+                    let trackerSheet = await checkSpreadsheetAvailability(params['access_token'], 'tracker-data')
+                    if (trackerSheet.exists) {
+                        console.log(`Spreadsheet is available ${trackerSheet.id}`);
+                    }
+                    else {
+                        console.log('Spreadsheet is not available');
+                        if (params['scope'].includes('https://www.googleapis.com/auth/spreadsheets')) {
+                            let newSheetId = await createSpreadSheet(params['access_token']);
+                            if (newSheetId) {
+                                console.log(`New spreadsheet created with ID: ${newSheetId}`);
+                            } else {
+                                console.error('Failed to create new spreadsheet.');
+                            }
+                        }
+                    }
+
+                }
+                else {
+                    // User didn't authorize spreadseet read/write permission.
+                    // Update UX and application accordingly
+                    console.log('User did not authorize spreadsheets read/write permission.');
+                }
+            } else {
+                oauth2SignIn();
+            }
+        }
+
+        /*
+         * Create form to request access token fsrom Google's OAuth 2.0 server.
+         */
+        function oauth2SignIn() {
+            // create random state value and store in local storage
+            var state = generateCryptoRandomState();
+            localStorage.setItem('state', state);
+
+            // Google's OAuth 2.0 endpoint for requesting an access token
+            var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
+
+            // Create element to open OAuth 2.0 endpoint in new window.
+            var form = document.createElement('form');
+            form.setAttribute('method', 'GET'); // Send as a GET request.
+            form.setAttribute('action', oauth2Endpoint);
+
+            // Parameters to pass to OAuth 2.0 endpoint.
+            var params = {
+                'client_id': YOUR_CLIENT_ID,
+                'redirect_uri': YOUR_REDIRECT_URI,
+                'scope': 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
+                'state': state,
+                'include_granted_scopes': 'true',
+                'response_type': 'token'
+            };
+
+            // Add form parameters as hidden input values.
+            for (var p in params) {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'hidden');
+                input.setAttribute('name', p);
+                input.setAttribute('value', params[p]);
+                form.appendChild(input);
+            }
+
+            // Add form to page and submit it to open the OAuth 2.0 endpoint.
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        async function checkSpreadsheetAvailability(accessToken, spreadsheetId) {
+            const query = encodeURIComponent("mimeType='application/vnd.google-apps.spreadsheet' and name='tracker-data'");
+            const fields = 'files(id, name)';
+            const apiUrl = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=${fields}`;
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.files && data.files.length > 0) {
+                        console.log('A Google Sheet named "tracker-data" exists in the user\'s Drive. ID:', data.files[0].id);
+                        return { exists: true, id: data.files[0].id };
+                    } else {
+                        console.log('No Google Sheet named "tracker-data" was found in the user\'s Drive.');
+                        return { exists: false, id: null };
+                    }
+                } else if (response.status === 401) {
+                    console.error('Unauthorized. Access token may be invalid or expired.');
+                    return { exists: false, id: null };
+                } else {
+                    console.error('Error checking for "tracker-data" sheet:', response.status, response.statusText);
+                    return { exists: false, id: null };
+                }
+
+            } catch (error) {
+                console.error('Error during API request:', error);
+                return { exists: false, id: null }; // Network error or other issue
+            }
+        }
+
+        async function createSpreadSheet(accessToken) {
+            const apiUrl = 'https://sheets.googleapis.com/v4/spreadsheets';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        properties: {
+                            title: 'tracker-data',
+                        },
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Google Sheet "tracker-data" created successfully. ID:', data.spreadsheetId);
+                    return data.spreadsheetId;
+                } else {
+                    let txt = await response.text()
+                    console.error('Error creating "tracker-data" sheet:', response.status, response.statusText);
+                    console.error('Response text:', txt);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error during API request to create "tracker-data" sheet:', error);
+                return null;
+            }
+        }
+
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>

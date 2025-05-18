@@ -1,0 +1,48 @@
+/*  https://www.freecodecamp.org/news/how-to-build-a-calendar-with-css-grid/ */
+
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.day-of-week,
+.date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  width: 100%;
+  max-width: 50vh;
+}
+
+.day-of-week{
+  text-align: center;
+}
+
+.date-grid div {
+  display: flex;
+  border: thin solid black;
+  padding: 2px;;
+  text-align: left;
+  cursor: pointer;
+  aspect-ratio: 1;
+}
+
+input[type="month"] {
+  max-width: 50vh;
+  padding: 4px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: large;
+  text-align: center;
+}
+
+.today {
+  background-color: gainsboro;
+}
+
+.date-grid .selection {
+  border: thick black solid;
+  background-color: darkgrey;
+}
