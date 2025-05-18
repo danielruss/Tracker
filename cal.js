@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             addSymptom(obj)
 
             // Add the symptom to the datalist for future use
-            addToDataList(symptom)
+            addToDataList([ symptom ])
             updateCalendar(new Date(currentDate));
             
             document.getElementById("symptom").value = "";
