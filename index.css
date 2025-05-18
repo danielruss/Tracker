@@ -23,9 +23,9 @@
 
 .date-grid div {
   display: flex;
+  justify-content:space-between;
   border: thin solid black;
   padding: 2px;;
-  text-align: left;
   cursor: pointer;
   aspect-ratio: 1;
 }

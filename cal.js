@@ -21,10 +21,21 @@ function updateCalendar(date) {
     for (let i = 1; i <= dayn.getDate(); i++) {
         let dateElement = document.createElement('div');
         dateElement.classList.add('date');
-        dateElement.innerText = i;
+        let numElement = document.createElement('span');
+        numElement.innerText = i;
+        dateElement.insertAdjacentElement("beforeend",numElement);
         dateElement.dataset.date = new Date(day1.getFullYear(), day1.getMonth(), i).toDateString();
+        if ( symptomMap.has(dateElement.dataset.date) ) {
+            let iconElement = document.createElement('span');
+            iconElement.innerHTML = `<i class="bi bi-journal-bookmark-fill"></i>`
+            dateElement.insertAdjacentElement("beforeend",iconElement);
+        }
         dateElement.addEventListener('click', function (event) {
             currentDate = event.target.dataset.date;
+            // if you click on the child span it causes a problem.
+            if (!currentDate){
+                currentDate = event.target.parentElement.dataset.date;
+            }
             showDay(currentDate);
         });
         dateGrid.appendChild(dateElement);
@@ -41,13 +52,11 @@ function showDay(date) {
     console.log(`get day for ${date}`)
 
     let today = new Date()
-//    let dthead= document.getElementById("dthead")
-//    dthead.innerText = date;
     let dateGrid = document.querySelector('.date-grid');
     dateGrid.querySelector(`[data-date="${today.toDateString()}"]`)?.classList.add('today');
     dateGrid.querySelectorAll('.selection').forEach( (el) => el.classList.remove("selection"));
     if (today.toDateString() != date ){
-        dateGrid.querySelector(`[data-date="${date}"]`).classList.add('selection');
+        dateGrid.querySelector(`[data-date="${date}"]`)?.classList.add('selection');
     }
     
     let symptoms = allSymptoms.filter( (obj) => {
@@ -98,14 +107,16 @@ function buildTable(symptoms,search=false) {
 }
 
 async function loadSymptomsFromIDB(){
-    symptomCache.iterate( (symptoms,date,indx) => {
+    await symptomCache.iterate( (symptoms,date,indx) => {
         symptomMap.set(date,symptoms)
         symptoms.forEach( s=> allSymptoms.push({date:date,symptom:s}))
+        addToDataList(symptoms)
     }).then( ()=>{
         console.log(symptomMap);
         console.log(allSymptoms)
     })
 }
+
 function addSymptom(symptomObj){
     const {date, symptom} = symptomObj;
     if ( !symptomMap.has(date) ) {
@@ -117,8 +128,8 @@ function addSymptom(symptomObj){
     symptomCache.setItem(date,symptomMap.get(date))
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    loadSymptomsFromIDB()
+document.addEventListener('DOMContentLoaded', async function () {
+    await loadSymptomsFromIDB()
  
     let monthInput = document.getElementById('monthInput');
     monthInput.value = calendarDate.toISOString().slice(0, 7);
@@ -142,12 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
             addSymptom(obj)
 
             // Add the symptom to the datalist for future use
-            let prevlist = document.getElementById("previousSymptoms");
-            if (!prevlist.querySelector(`option[value="${symptom}"]`)) {
-                let option = document.createElement("option");
-                option.value = symptom;
-                prevlist.appendChild(option);
-            }
+            addToDataList(symptom)
             updateCalendar(new Date(currentDate));
             
             document.getElementById("symptom").value = "";
@@ -158,6 +164,18 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("searchBTN").addEventListener("click",searchText)
 
 });
+
+function addToDataList(symptom) {
+    const prevlist = document.getElementById("previousSymptoms");
+    const symptomSet = new Set(symptom);
+    symptomSet.forEach((s) => {
+        if (!prevlist.querySelector(`option[value="${symptom}"]`)) {
+            let option = document.createElement("option");
+            option.value = s;
+            prevlist.appendChild(option);
+        }
+    })
+}
 
 function searchText(){
     const searchInput = document.getElementById("searchInput");
